@@ -1,5 +1,6 @@
 from flask import Flask, render_template, jsonify, request
 import json, math, random
+import os
 from pathlib import Path
 
 app = Flask(__name__)
@@ -47,4 +48,4 @@ def simulate():
     })
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8000, debug=False)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8000)), debug=False)
