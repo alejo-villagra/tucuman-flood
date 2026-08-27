@@ -2,6 +2,7 @@ from flask import Flask, render_template, jsonify, request
 import json, math, random
 import os
 from pathlib import Path
+import psycopg
 
 app = Flask(__name__)
 BASE = Path(__file__).parent
