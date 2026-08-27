@@ -4,6 +4,8 @@ import os
 from pathlib import Path
 import psycopg
 
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
 app = Flask(__name__)
 BASE = Path(__file__).parent
 
