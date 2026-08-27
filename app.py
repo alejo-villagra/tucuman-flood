@@ -57,11 +57,25 @@ def create_tables():
                     )
                 """)
 
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS measurements (
+                        id SERIAL PRIMARY KEY,
+                        station_id VARCHAR(50) NOT NULL,
+                        timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        water_level DOUBLE PRECISION,
+                        rainfall DOUBLE PRECISION,
+                        temperature DOUBLE PRECISION,
+                        source VARCHAR(20) NOT NULL DEFAULT 'simulated',
+                        CONSTRAINT measurements_source_check
+                            CHECK (source IN ('real', 'simulated'))
+                    )
+                """)
+
             conn.commit()
 
         return jsonify({
             "status": "ok",
-            "message": "Tabla stations creada correctamente"
+            "message": "Tablas stations y measurements creadas correctamente"
         })
 
     except Exception as e:
