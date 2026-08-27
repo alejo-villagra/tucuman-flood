@@ -39,6 +39,37 @@ def test_db():
             "message": str(e)
         }), 500
 
+@app.route("/api/create-tables")
+def create_tables():
+    try:
+        with psycopg.connect(DATABASE_URL) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS stations (
+                        id SERIAL PRIMARY KEY,
+                        station_id VARCHAR(50) UNIQUE NOT NULL,
+                        name VARCHAR(100) NOT NULL,
+                        latitude DOUBLE PRECISION,
+                        longitude DOUBLE PRECISION,
+                        station_type VARCHAR(50),
+                        river VARCHAR(100),
+                        active BOOLEAN DEFAULT TRUE
+                    )
+                """)
+
+            conn.commit()
+
+        return jsonify({
+            "status": "ok",
+            "message": "Tabla stations creada correctamente"
+        })
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
 @app.route("/api/simulate", methods=["POST"])
 def simulate():
     d = request.get_json(force=True)
