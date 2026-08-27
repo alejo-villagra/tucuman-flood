@@ -20,6 +20,25 @@ def index():
 def stations():
     return jsonify(STATIONS)
 
+@app.route("/api/test-db")
+def test_db():
+    try:
+        with psycopg.connect(DATABASE_URL) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT 1")
+                result = cur.fetchone()
+
+        return jsonify({
+            "status": "ok",
+            "database": result[0]
+        })
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
 @app.route("/api/simulate", methods=["POST"])
 def simulate():
     d = request.get_json(force=True)
