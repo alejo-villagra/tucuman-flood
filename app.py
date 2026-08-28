@@ -84,6 +84,89 @@ def create_tables():
             "message": str(e)
         }), 500
 
+@app.route("/api/measurements", methods=["POST"])
+def create_measurement():
+    try:
+        d = request.get_json(force=True)
+
+        station_id = d.get("station_id")
+        source = d.get("source", "simulated")
+
+        if not station_id:
+            return jsonify({
+                "status": "error",
+                "message": "station_id es obligatorio"
+            }), 400
+
+        if source not in ("real", "simulated"):
+            return jsonify({
+                "status": "error",
+                "message": "source debe ser 'real' o 'simulated'"
+            }), 400
+
+        water_level = d.get("water_level")
+        rainfall = d.get("rainfall")
+        temperature = d.get("temperature")
+
+        if water_level is not None:
+            water_level = float(water_level)
+
+        if rainfall is not None:
+            rainfall = float(rainfall)
+
+        if temperature is not None:
+            temperature = float(temperature)
+
+        with psycopg.connect(DATABASE_URL) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO measurements (
+                        station_id,
+                        water_level,
+                        rainfall,
+                        temperature,
+                        source
+                    )
+                    VALUES (%s, %s, %s, %s, %s)
+                    RETURNING id, timestamp
+                """, (
+                    station_id,
+                    water_level,
+                    rainfall,
+                    temperature,
+                    source
+                ))
+
+                measurement_id, timestamp = cur.fetchone()
+
+            conn.commit()
+
+        return jsonify({
+            "status": "ok",
+            "message": "Medición guardada correctamente",
+            "measurement": {
+                "id": measurement_id,
+                "station_id": station_id,
+                "timestamp": timestamp.isoformat(),
+                "water_level": water_level,
+                "rainfall": rainfall,
+                "temperature": temperature,
+                "source": source
+            }
+        })
+
+    except ValueError:
+        return jsonify({
+            "status": "error",
+            "message": "Los valores de los sensores deben ser numéricos"
+        }), 400
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
 @app.route("/api/simulate", methods=["POST"])
 def simulate():
     d = request.get_json(force=True)
