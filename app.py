@@ -220,6 +220,65 @@ def get_measurements():
             "message": str(e)
         }), 500
 
+@app.route("/api/simulate-sensors", methods=["POST"])
+def simulate_sensors():
+    try:
+        simulated_measurements = []
+
+        stations_to_simulate = ["ST001", "ST002", "ST003"]
+
+        with psycopg.connect(DATABASE_URL) as conn:
+            with conn.cursor() as cur:
+
+                for station_id in stations_to_simulate:
+
+                    water_level = round(random.uniform(0.8, 2.5), 2)
+                    rainfall = round(random.uniform(0, 50), 2)
+                    temperature = round(random.uniform(15, 30), 1)
+
+                    cur.execute("""
+                        INSERT INTO measurements (
+                            station_id,
+                            water_level,
+                            rainfall,
+                            temperature,
+                            source
+                        )
+                        VALUES (%s, %s, %s, %s, 'simulated')
+                        RETURNING id, timestamp
+                    """, (
+                        station_id,
+                        water_level,
+                        rainfall,
+                        temperature
+                    ))
+
+                    measurement_id, timestamp = cur.fetchone()
+
+                    simulated_measurements.append({
+                        "id": measurement_id,
+                        "station_id": station_id,
+                        "timestamp": timestamp.isoformat(),
+                        "water_level": water_level,
+                        "rainfall": rainfall,
+                        "temperature": temperature,
+                        "source": "simulated"
+                    })
+
+            conn.commit()
+
+        return jsonify({
+            "status": "ok",
+            "message": "Mediciones simuladas generadas correctamente",
+            "measurements": simulated_measurements
+        })
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
 @app.route("/api/simulate", methods=["POST"])
 def simulate():
     d = request.get_json(force=True)
