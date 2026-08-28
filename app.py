@@ -44,6 +44,7 @@ def create_tables():
     try:
         with psycopg.connect(DATABASE_URL) as conn:
             with conn.cursor() as cur:
+
                 cur.execute("""
                     CREATE TABLE IF NOT EXISTS stations (
                         id SERIAL PRIMARY KEY,
@@ -71,11 +72,34 @@ def create_tables():
                     )
                 """)
 
+                stations_data = [
+                    ("ST001", "San Miguel de Tucumán", -26.8083, -65.2176),
+                    ("ST002", "El Colmenar", -26.7920, -65.1980),
+                    ("ST003", "Lules", -26.9280, -65.3380),
+                    ("ST004", "Concepción", -27.3450, -65.5940),
+                    ("ST005", "Tafí del Valle", -26.8520, -65.7080),
+                    ("ST006", "La Madrid", -27.6280, -65.2570)
+                ]
+
+                for station in stations_data:
+                    cur.execute("""
+                        INSERT INTO stations (
+                            station_id,
+                            name,
+                            latitude,
+                            longitude,
+                            station_type,
+                            active
+                        )
+                        VALUES (%s, %s, %s, %s, 'sensor', TRUE)
+                        ON CONFLICT (station_id) DO NOTHING
+                    """, station)
+
             conn.commit()
 
         return jsonify({
             "status": "ok",
-            "message": "Tablas stations y measurements creadas correctamente"
+            "message": "Tablas creadas y estaciones cargadas correctamente"
         })
 
     except Exception as e:
