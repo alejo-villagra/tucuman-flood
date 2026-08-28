@@ -365,6 +365,70 @@ def get_db_stations():
             "message": str(e)
         }), 500
 
+@app.route("/api/stations-status", methods=["GET"])
+def stations_status():
+    try:
+        with psycopg.connect(DATABASE_URL) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT
+                        s.station_id,
+                        s.name,
+                        s.latitude,
+                        s.longitude,
+                        s.station_type,
+                        s.active,
+                        m.timestamp,
+                        m.water_level,
+                        m.rainfall,
+                        m.temperature,
+                        m.source
+                    FROM stations s
+                    LEFT JOIN LATERAL (
+                        SELECT
+                            timestamp,
+                            water_level,
+                            rainfall,
+                            temperature,
+                            source
+                        FROM measurements
+                        WHERE measurements.station_id = s.station_id
+                        ORDER BY timestamp DESC
+                        LIMIT 1
+                    ) m ON TRUE
+                    ORDER BY s.station_id
+                """)
+
+                rows = cur.fetchall()
+
+        stations = []
+
+        for row in rows:
+            stations.append({
+                "station_id": row[0],
+                "name": row[1],
+                "latitude": row[2],
+                "longitude": row[3],
+                "station_type": row[4],
+                "active": row[5],
+                "timestamp": row[6].isoformat() if row[6] else None,
+                "water_level": row[7],
+                "rainfall": row[8],
+                "temperature": row[9],
+                "source": row[10]
+            })
+
+        return jsonify({
+            "status": "ok",
+            "stations": stations
+        })
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
 @app.route("/api/simulate", methods=["POST"])
 def simulate():
     d = request.get_json(force=True)
