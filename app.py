@@ -167,6 +167,59 @@ def create_measurement():
             "message": str(e)
         }), 500
 
+@app.route("/api/measurements", methods=["GET"])
+def get_measurements():
+    try:
+        limit = request.args.get("limit", default=10, type=int)
+
+        if limit < 1:
+            limit = 10
+
+        if limit > 100:
+            limit = 100
+
+        with psycopg.connect(DATABASE_URL) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT
+                        id,
+                        station_id,
+                        timestamp,
+                        water_level,
+                        rainfall,
+                        temperature,
+                        source
+                    FROM measurements
+                    ORDER BY timestamp DESC
+                    LIMIT %s
+                """, (limit,))
+
+                rows = cur.fetchall()
+
+        measurements = []
+
+        for row in rows:
+            measurements.append({
+                "id": row[0],
+                "station_id": row[1],
+                "timestamp": row[2].isoformat(),
+                "water_level": row[3],
+                "rainfall": row[4],
+                "temperature": row[5],
+                "source": row[6]
+            })
+
+        return jsonify({
+            "status": "ok",
+            "measurements": measurements
+        })
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
 @app.route("/api/simulate", methods=["POST"])
 def simulate():
     d = request.get_json(force=True)
