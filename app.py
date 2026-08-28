@@ -72,6 +72,24 @@ def create_tables():
                     )
                 """)
 
+                cur.execute("""
+                    SELECT 1
+                    FROM pg_constraint
+                    WHERE conname = 'measurements_station_fk'
+                """)
+
+                constraint_exists = cur.fetchone()
+
+                if not constraint_exists:
+                    cur.execute("""
+                        ALTER TABLE measurements
+                        ADD CONSTRAINT measurements_station_fk
+                        FOREIGN KEY (station_id)
+                        REFERENCES stations(station_id)
+                        ON UPDATE CASCADE
+                        ON DELETE RESTRICT
+                    """)
+
                 stations_data = [
                     ("ST001", "San Miguel de Tucumán", -26.8083, -65.2176),
                     ("ST002", "El Colmenar", -26.7920, -65.1980),
@@ -99,7 +117,7 @@ def create_tables():
 
         return jsonify({
             "status": "ok",
-            "message": "Tablas creadas y estaciones cargadas correctamente"
+            "message": "Tablas creadas, estaciones cargadas y relación establecida correctamente"
         })
 
     except Exception as e:
