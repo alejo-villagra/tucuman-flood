@@ -303,6 +303,50 @@ def simulate_sensors():
             "message": str(e)
         }), 500
 
+@app.route("/api/db/stations", methods=["GET"])
+def get_db_stations():
+    try:
+        with psycopg.connect(DATABASE_URL) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT
+                        station_id,
+                        name,
+                        latitude,
+                        longitude,
+                        station_type,
+                        river,
+                        active
+                    FROM stations
+                    ORDER BY station_id
+                """)
+
+                rows = cur.fetchall()
+
+        stations = []
+
+        for row in rows:
+            stations.append({
+                "station_id": row[0],
+                "name": row[1],
+                "latitude": row[2],
+                "longitude": row[3],
+                "station_type": row[4],
+                "river": row[5],
+                "active": row[6]
+            })
+
+        return jsonify({
+            "status": "ok",
+            "stations": stations
+        })
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
 @app.route("/api/simulate", methods=["POST"])
 def simulate():
     d = request.get_json(force=True)
