@@ -265,18 +265,28 @@ def get_measurements():
 @app.route("/api/simulate-sensors", methods=["POST"])
 def simulate_sensors():
     try:
-        simulated_measurements = []
-
-        stations_to_simulate = ["ST001", "ST002", "ST003"]
-
         with psycopg.connect(DATABASE_URL) as conn:
             with conn.cursor() as cur:
 
-                for station_id in stations_to_simulate:
+                # Obtener las estaciones activas
+                cur.execute("""
+                    SELECT station_id
+                    FROM stations
+                    WHERE active = TRUE
+                    ORDER BY station_id
+                """)
 
-                    water_level = round(random.uniform(0.8, 2.5), 2)
-                    rainfall = round(random.uniform(0, 50), 2)
-                    temperature = round(random.uniform(15, 30), 1)
+                stations = cur.fetchall()
+
+                measurements = []
+
+                for station in stations:
+                    station_id = station[0]
+
+                    # Generar valores simulados
+                    water_level = round(random.uniform(1.0, 5.5), 2)
+                    rainfall = round(random.uniform(0.0, 60.0), 2)
+                    temperature = round(random.uniform(15.0, 35.0), 1)
 
                     cur.execute("""
                         INSERT INTO measurements (
@@ -287,7 +297,14 @@ def simulate_sensors():
                             source
                         )
                         VALUES (%s, %s, %s, %s, 'simulated')
-                        RETURNING id, timestamp
+                        RETURNING
+                            id,
+                            station_id,
+                            timestamp,
+                            water_level,
+                            rainfall,
+                            temperature,
+                            source
                     """, (
                         station_id,
                         water_level,
@@ -295,24 +312,24 @@ def simulate_sensors():
                         temperature
                     ))
 
-                    measurement_id, timestamp = cur.fetchone()
+                    row = cur.fetchone()
 
-                    simulated_measurements.append({
-                        "id": measurement_id,
-                        "station_id": station_id,
-                        "timestamp": timestamp.isoformat(),
-                        "water_level": water_level,
-                        "rainfall": rainfall,
-                        "temperature": temperature,
-                        "source": "simulated"
+                    measurements.append({
+                        "id": row[0],
+                        "station_id": row[1],
+                        "timestamp": row[2].isoformat(),
+                        "water_level": row[3],
+                        "rainfall": row[4],
+                        "temperature": row[5],
+                        "source": row[6]
                     })
 
             conn.commit()
 
         return jsonify({
             "status": "ok",
-            "message": "Mediciones simuladas generadas correctamente",
-            "measurements": simulated_measurements
+            "message": "Mediciones simuladas generadas para todas las estaciones",
+            "measurements": measurements
         })
 
     except Exception as e:
