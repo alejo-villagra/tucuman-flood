@@ -1,5 +1,6 @@
 let map, stations = [];
 let stationStatus = [];
+let stationMarkers = {};
 
 const riskClass = (risk) =>
   risk < 25 ? "normal" :
@@ -205,34 +206,37 @@ async function load() {
 
     // 5. Crear marcadores
     stations.forEach(s => {
-      const r = stationRisk(s);
+  const r = stationRisk(s);
 
-      const icon = L.divIcon({
-        className: "custom-marker",
+  const icon = L.divIcon({
+    className: "custom-marker",
 
-        html: `
-          <div style="
-            width:18px;
-            height:18px;
-            border-radius:50%;
-            background:${markerColor(r)};
-            border:3px solid white;
-            box-shadow:0 1px 6px #0006;
-          "></div>
-        `,
+    html: `
+      <div style="
+        width:18px;
+        height:18px;
+        border-radius:50%;
+        background:${markerColor(r)};
+        border:3px solid white;
+        box-shadow:0 1px 6px #0006;
+      "></div>
+    `,
 
-        iconSize: [18, 18],
-        iconAnchor: [9, 9]
-      });
+    iconSize: [18, 18],
+    iconAnchor: [9, 9]
+  });
 
-      L.marker(
-        [s.lat, s.lon],
-        { icon: icon }
-      )
-        .addTo(map)
-        .bindTooltip(s.name)
-        .on("click", () => selectStation(s));
-    });
+  const marker = L.marker(
+    [s.lat, s.lon],
+    { icon: icon }
+  )
+    .addTo(map)
+    .bindTooltip(s.name)
+    .on("click", () => selectStation(s));
+
+  // Guardamos el marcador para poder actualizarlo después
+  stationMarkers[s.station_id] = marker;
+});
 
     // 6. Seleccionar primera estación
     if (stations.length > 0) {
@@ -300,30 +304,36 @@ async function updateSensorData() {
 
     stationStatus = statusData.stations || [];
 
-    stations = stations.map((station) => {
-      const status = stationStatus.find(
-        item => item.station_id === station.station_id
-      );
+    // Actualizar colores de los marcadores
+stations.forEach(station => {
+  const marker = stationMarkers[station.station_id];
 
-      return {
-        ...station,
+  if (!marker) {
+    return;
+  }
 
-        sensorWaterLevel:
-          status ? status.water_level : null,
+  const risk = stationRisk(station);
 
-        sensorRainfall:
-          status ? status.rainfall : null,
+  const icon = L.divIcon({
+    className: "custom-marker",
 
-        sensorTemperature:
-          status ? status.temperature : null,
+    html: `
+      <div style="
+        width:18px;
+        height:18px;
+        border-radius:50%;
+        background:${markerColor(risk)};
+        border:3px solid white;
+        box-shadow:0 1px 6px #0006;
+      "></div>
+    `,
 
-        sensorSource:
-          status ? status.source : null,
+    iconSize: [18, 18],
+    iconAnchor: [9, 9]
+  });
 
-        sensorTimestamp:
-          status ? status.timestamp : null
-      };
-    });
+  marker.setIcon(icon);
+});
 
     // Actualizar la estación actualmente seleccionada
     const currentStationName =
