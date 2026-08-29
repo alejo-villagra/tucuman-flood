@@ -19,14 +19,57 @@ function markerColor(r) {
 }
 
 function stationRisk(s) {
-  let score = Math.min(
-    100,
-    s.rain24h / 2 +
-    Math.max(0, s.river - 3.2) * 20 +
-    s.trend * 80
-  );
+  // Si no hay datos del sensor, usamos el cálculo
+  // original del prototipo.
+  if (
+    s.sensorWaterLevel === null ||
+    s.sensorWaterLevel === undefined
+  ) {
+    let score = Math.min(
+      100,
+      s.rain24h / 2 +
+      Math.max(0, s.river - 3.2) * 20 +
+      s.trend * 80
+    );
 
-  return Math.round(score);
+    return Math.round(score);
+  }
+
+  // -----------------------------
+  // RIESGO EXPERIMENTAL DEL SENSOR
+  // -----------------------------
+
+  let levelScore = 0;
+  let rainScore = 0;
+
+  // Nivel de agua
+  if (s.sensorWaterLevel < 2.5) {
+    levelScore = 0;
+  } else if (s.sensorWaterLevel < 3.5) {
+    levelScore = 35;
+  } else if (s.sensorWaterLevel < 4.5) {
+    levelScore = 70;
+  } else {
+    levelScore = 100;
+  }
+
+  // Lluvia
+  if (s.sensorRainfall < 20) {
+    rainScore = 0;
+  } else if (s.sensorRainfall < 40) {
+    rainScore = 30;
+  } else if (s.sensorRainfall < 60) {
+    rainScore = 70;
+  } else {
+    rainScore = 100;
+  }
+
+  // Combinación experimental
+  const score =
+    levelScore * 0.70 +
+    rainScore * 0.30;
+
+  return Math.round(Math.min(score, 100));
 }
 
 function formatSensorValue(value, unit) {
