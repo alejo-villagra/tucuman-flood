@@ -245,4 +245,65 @@ async function simulate() {
     d.message;
 }
 
+async function updateSensorData() {
+  try {
+    const statusRes = await fetch("/api/stations-status");
+
+    if (!statusRes.ok) {
+      throw new Error("No se pudieron actualizar los datos de sensores");
+    }
+
+    const statusData = await statusRes.json();
+
+    stationStatus = statusData.stations || [];
+
+    stations = stations.map((station) => {
+      const status = stationStatus.find(
+        item => item.station_id === station.station_id
+      );
+
+      return {
+        ...station,
+
+        sensorWaterLevel:
+          status ? status.water_level : null,
+
+        sensorRainfall:
+          status ? status.rainfall : null,
+
+        sensorTemperature:
+          status ? status.temperature : null,
+
+        sensorSource:
+          status ? status.source : null,
+
+        sensorTimestamp:
+          status ? status.timestamp : null
+      };
+    });
+
+    // Actualizar la estación actualmente seleccionada
+    const currentStationName =
+      document.getElementById("stationName").textContent;
+
+    const currentStation = stations.find(
+      station => station.name === currentStationName
+    );
+
+    if (currentStation) {
+      selectStation(currentStation);
+    }
+
+    console.log("Datos de sensores actualizados:", new Date());
+
+  } catch (error) {
+    console.error(
+      "Error actualizando datos de sensores:",
+      error
+    );
+  }
+}
+
+setInterval(updateSensorData, 30000);
+
 window.addEventListener("load", load);
