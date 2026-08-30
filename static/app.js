@@ -357,6 +357,30 @@ stations.forEach(station => {
   }
 }
 
-setInterval(updateSensorData, 30000);
+setInterval(async () => {
+  try {
+    // Generar nuevas mediciones simuladas
+    const simulationRes = await fetch("/api/simulate-sensors", {
+      method: "POST"
+    });
+
+    if (!simulationRes.ok) {
+      throw new Error("No se pudieron generar las mediciones simuladas");
+    }
+
+    // Esperar un momento para asegurarnos de que PostgreSQL
+    // haya recibido las mediciones
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // Actualizar el dashboard con las nuevas mediciones
+    await updateSensorData();
+
+  } catch (error) {
+    console.error(
+      "Error en la simulación automática:",
+      error
+    );
+  }
+}, 30000);
 
 window.addEventListener("load", load);
