@@ -294,69 +294,119 @@ async function simulate() {
 
 async function updateSensorData() {
   try {
-    const statusRes = await fetch("/api/stations-status");
+
+    const statusRes = await fetch(
+      "/api/stations-status",
+      {
+        cache: "no-store"
+      }
+    );
 
     if (!statusRes.ok) {
-      throw new Error("No se pudieron actualizar los datos de sensores");
+      throw new Error(
+        "No se pudieron actualizar los datos de sensores"
+      );
     }
 
     const statusData = await statusRes.json();
 
     stationStatus = statusData.stations || [];
 
-    // Actualizar colores de los marcadores
-stations.forEach(station => {
-  const marker = stationMarkers[station.station_id];
+    // ------------------------------------------------
+    // ACTUALIZAR LOS DATOS DE CADA ESTACIÓN
+    // ------------------------------------------------
 
-  if (!marker) {
-    return;
-  }
+    stations = stations.map(station => {
 
-  const risk = stationRisk(station);
+      const status = stationStatus.find(
+        item => item.station_id === station.station_id
+      );
 
-  const icon = L.divIcon({
-    className: "custom-marker",
+      if (!status) {
+        return station;
+      }
 
-    html: `
-      <div style="
-        width:18px;
-        height:18px;
-        border-radius:50%;
-        background:${markerColor(risk)};
-        border:3px solid white;
-        box-shadow:0 1px 6px #0006;
-      "></div>
-    `,
+      return {
+        ...station,
 
-    iconSize: [18, 18],
-    iconAnchor: [9, 9]
-  });
+        sensorWaterLevel: status.water_level,
+        sensorRainfall: status.rainfall,
+        sensorTemperature: status.temperature,
+        sensorSource: status.source,
+        sensorTimestamp: status.timestamp
+      };
+    });
 
-  marker.setIcon(icon);
-});
 
-    // Actualizar la estación actualmente seleccionada
+    // ------------------------------------------------
+    // ACTUALIZAR COLOR DE LOS MARCADORES
+    // ------------------------------------------------
+
+    stations.forEach(station => {
+
+      const marker =
+        stationMarkers[station.station_id];
+
+      if (!marker) {
+        return;
+      }
+
+      const risk = stationRisk(station);
+
+      const icon = L.divIcon({
+
+        className: "custom-marker",
+
+        html: `
+          <div style="
+            width:18px;
+            height:18px;
+            border-radius:50%;
+            background:${markerColor(risk)};
+            border:3px solid white;
+            box-shadow:0 1px 6px #0006;
+          "></div>
+        `,
+
+        iconSize: [18, 18],
+        iconAnchor: [9, 9]
+      });
+
+      marker.setIcon(icon);
+    });
+
+
+    // ------------------------------------------------
+    // ACTUALIZAR ESTACIÓN SELECCIONADA
+    // ------------------------------------------------
+
     const currentStationName =
       document.getElementById("stationName").textContent;
 
-    const currentStation = stations.find(
-      station => station.name === currentStationName
-    );
+    const currentStation =
+      stations.find(
+        station =>
+          station.name === currentStationName
+      );
 
     if (currentStation) {
       selectStation(currentStation);
     }
 
-    console.log("Datos de sensores actualizados:", new Date());
+
+    console.log(
+      "Datos de sensores actualizados:",
+      new Date()
+    );
 
   } catch (error) {
+
     console.error(
       "Error actualizando datos de sensores:",
       error
     );
   }
 }
-
 let updatingSensors = false;
 
 setInterval(async () => {
