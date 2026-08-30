@@ -357,30 +357,110 @@ stations.forEach(station => {
   }
 }
 
+let updatingSensors = false;
+
 setInterval(async () => {
+
+  if (updatingSensors) {
+    console.log("Actualización anterior todavía en proceso...");
+    return;
+  }
+
+  updatingSensors = true;
+
   try {
-    // Generar nuevas mediciones simuladas
-    const simulationRes = await fetch("/api/simulate-sensors", {
-      method: "POST"
-    });
+
+    console.log("Generando nuevas mediciones...");
+
+    const simulationRes = await fetch(
+      "/api/simulate-sensors",
+      {
+        method: "POST",
+        cache: "no-store"
+      }
+    );
 
     if (!simulationRes.ok) {
-      throw new Error("No se pudieron generar las mediciones simuladas");
+      throw new Error(
+        "Error HTTP al generar mediciones: " +
+        simulationRes.status
+      );
     }
 
-    // Esperar un momento para asegurarnos de que PostgreSQL
-    // haya recibido las mediciones
-    await new Promise(resolve => setTimeout(resolve, 500));
+    const simulationData = await simulationRes.json();
 
-    // Actualizar el dashboard con las nuevas mediciones
+    console.log(
+      "Nuevas mediciones generadas:",
+      simulationData
+    );
+
+    // Esperamos medio segundo antes de consultar
+    // las nuevas mediciones
+    await new Promise(resolve =>
+      setTimeout(resolve, 500)
+    );
+
     await updateSensorData();
 
   } catch (error) {
+
     console.error(
       "Error en la simulación automática:",
       error
     );
+
+    // Reintento después de 2 segundos
+    setTimeout(async () => {
+
+      try {
+
+        console.log("Reintentando simulación...");
+
+        const retryRes = await fetch(
+          "/api/simulate-sensors",
+          {
+            method: "POST",
+            cache: "no-store"
+          }
+        );
+
+        if (!retryRes.ok) {
+          throw new Error(
+            "Error HTTP en reintento: " +
+            retryRes.status
+          );
+        }
+
+        const retryData = await retryRes.json();
+
+        console.log(
+          "Reintento exitoso:",
+          retryData
+        );
+
+        await new Promise(resolve =>
+          setTimeout(resolve, 500)
+        );
+
+        await updateSensorData();
+
+      } catch (retryError) {
+
+        console.error(
+          "El reintento también falló:",
+          retryError
+        );
+
+      }
+
+    }, 2000);
+
+  } finally {
+
+    updatingSensors = false;
+
   }
+
 }, 30000);
 
 window.addEventListener("load", load);
