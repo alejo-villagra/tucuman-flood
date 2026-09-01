@@ -158,6 +158,15 @@ function calculateTrend(measurements) {
   const oldest = measurements[0];
   const newest = measurements[measurements.length - 1];
 
+  console.log("TREND DEBUG:", {
+  oldest: oldest,
+  newest: newest,
+  oldLevel: oldest.water_level,
+  newLevel: newest.water_level,
+  oldTime: oldest.timestamp,
+  newTime: newest.timestamp
+});
+
   const oldLevel = Number(oldest.water_level);
   const newLevel = Number(newest.water_level);
 
