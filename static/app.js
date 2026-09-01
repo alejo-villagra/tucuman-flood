@@ -1,4 +1,5 @@
 let map, stations = [];
+let historyChart = null;
 let stationStatus = [];
 let stationMarkers = {};
 
@@ -137,6 +138,122 @@ function selectStation(s) {
 
   el.textContent = riskLabel(r);
   el.className = "risk " + riskClass(r);
+
+  loadHistory(s.station_id);
+}
+
+async function loadHistory(stationId) {
+  try {
+    const res = await fetch(
+      `/api/measurements/${stationId}`,
+      {
+        cache: "no-store"
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error("No se pudo obtener el historial");
+    }
+
+    const data = await res.json();
+
+    const measurements = data.measurements || [];
+
+    // Orden cronológico: de más antigua a más reciente
+    measurements.reverse();
+
+    const labels = measurements.map(m => {
+      const date = new Date(m.timestamp);
+      return date.toLocaleTimeString("es-AR", {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    });
+
+    const waterLevels = measurements.map(
+      m => m.water_level
+    );
+
+    const rainfall = measurements.map(
+      m => m.rainfall
+    );
+
+    const canvas = document.getElementById("historyChart");
+
+    if (!canvas) return;
+
+    if (historyChart) {
+      historyChart.destroy();
+    }
+
+    historyChart = new Chart(canvas, {
+      type: "line",
+
+      data: {
+        labels: labels,
+
+        datasets: [
+          {
+            label: "Nivel del agua (m)",
+            data: waterLevels,
+            tension: 0.3,
+            yAxisID: "water"
+          },
+          {
+            label: "Lluvia (mm)",
+            data: rainfall,
+            tension: 0.3,
+            yAxisID: "rain"
+          }
+        ]
+      },
+
+      options: {
+        responsive: true,
+
+        interaction: {
+          mode: "index",
+          intersect: false
+        },
+
+        scales: {
+          water: {
+            type: "linear",
+            position: "left",
+            title: {
+              display: true,
+              text: "Nivel (m)"
+            }
+          },
+
+          rain: {
+            type: "linear",
+            position: "right",
+            title: {
+              display: true,
+              text: "Lluvia (mm)"
+            },
+
+            grid: {
+              drawOnChartArea: false
+            }
+          }
+        },
+
+        plugins: {
+          legend: {
+            display: true
+          }
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error(
+      "Error cargando historial:",
+      error
+    );
+  }
 }
 
 async function load() {
