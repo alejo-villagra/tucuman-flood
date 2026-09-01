@@ -198,6 +198,7 @@ function calculateTrend(measurements) {
   }
 
   const rate = (newLevel - oldLevel) / hours;
+  console.log("TREND RATE:", rate);
 
   let direction;
   let label;
