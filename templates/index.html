@@ -57,6 +57,11 @@
 <div id="stationRisk" class="risk normal">NORMAL</div>
     </div>
 
+<div class="history-section">
+  <div class="card-title">📈 HISTORIAL DE MEDICIONES</div>
+  <canvas id="historyChart"></canvas>
+</div>
+    
     <div class="card simulation">
       <div class="card-title">🧪 SIMULACIÓN DE INUNDACIÓN</div>
       <p class="hint">Ajustá las condiciones y ejecutá el modelo experimental.</p>
@@ -91,6 +96,7 @@
 
 <footer>Prototipo experimental · No constituye un sistema oficial de alerta ni una orden de evacuación.</footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>
