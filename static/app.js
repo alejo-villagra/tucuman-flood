@@ -175,6 +175,14 @@ function calculateTrend(measurements) {
 
   const hours = (newTime - oldTime) / (1000 * 60 * 60);
 
+  console.log("TREND CALC:", {
+  oldLevel,
+  newLevel,
+  oldTime,
+  newTime,
+  hours
+});
+
   if (
     !Number.isFinite(oldLevel) ||
     !Number.isFinite(newLevel) ||
