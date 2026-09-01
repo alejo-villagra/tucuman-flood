@@ -507,8 +507,11 @@ async function updateSensorData() {
       );
 
     if (currentStation) {
-      selectStation(currentStation);
-    }
+  selectStation(currentStation);
+
+  // Actualizar el historial de la estación seleccionada
+  await loadHistory(currentStation.station_id);
+}
 
 
     console.log(
