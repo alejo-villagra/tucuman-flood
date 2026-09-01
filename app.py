@@ -446,6 +446,54 @@ def stations_status():
             "message": str(e)
         }), 500
 
+@app.route("/api/measurements/<station_id>")
+def station_measurements(station_id):
+    try:
+        with psycopg.connect(DATABASE_URL) as conn:
+            with conn.cursor() as cur:
+
+                cur.execute("""
+                    SELECT
+                        id,
+                        station_id,
+                        timestamp,
+                        water_level,
+                        rainfall,
+                        temperature,
+                        source
+                    FROM measurements
+                    WHERE station_id = %s
+                    ORDER BY timestamp DESC
+                    LIMIT 30
+                """, (station_id,))
+
+                rows = cur.fetchall()
+
+        measurements = []
+
+        for row in rows:
+            measurements.append({
+                "id": row[0],
+                "station_id": row[1],
+                "timestamp": row[2].isoformat() if row[2] else None,
+                "water_level": row[3],
+                "rainfall": row[4],
+                "temperature": row[5],
+                "source": row[6]
+            })
+
+        return jsonify({
+            "status": "ok",
+            "station_id": station_id,
+            "measurements": measurements
+        })
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
 @app.route("/api/simulate", methods=["POST"])
 def simulate():
     d = request.get_json(force=True)
