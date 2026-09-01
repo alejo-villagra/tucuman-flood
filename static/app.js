@@ -142,6 +142,71 @@ function selectStation(s) {
   loadHistory(s.station_id);
 }
 
+function calculateTrend(measurements) {
+
+  if (!measurements || measurements.length < 2) {
+    return {
+      direction: "stable",
+      label: "ESTABLE",
+      icon: "→",
+      rate: 0
+    };
+  }
+
+  // Las mediciones deben estar ordenadas
+  // desde la más antigua hasta la más reciente
+  const oldest = measurements[0];
+  const newest = measurements[measurements.length - 1];
+
+  const oldLevel = Number(oldest.water_level);
+  const newLevel = Number(newest.water_level);
+
+  const oldTime = new Date(oldest.timestamp).getTime();
+  const newTime = new Date(newest.timestamp).getTime();
+
+  const hours = (newTime - oldTime) / (1000 * 60 * 60);
+
+  if (!Number.isFinite(hours) || hours <= 0) {
+    return {
+      direction: "stable",
+      label: "ESTABLE",
+      icon: "→",
+      rate: 0
+    };
+  }
+
+  const rate = (newLevel - oldLevel) / hours;
+
+  let direction;
+  let label;
+  let icon;
+
+  if (rate >= 0.30) {
+    direction = "rising-fast";
+    label = "SUBIENDO RÁPIDAMENTE";
+    icon = "↗";
+  } else if (rate >= 0.05) {
+    direction = "rising";
+    label = "SUBIENDO";
+    icon = "↗";
+  } else if (rate <= -0.05) {
+    direction = "falling";
+    label = "DESCENDIENDO";
+    icon = "↘";
+  } else {
+    direction = "stable";
+    label = "ESTABLE";
+    icon = "→";
+  }
+
+  return {
+    direction,
+    label,
+    icon,
+    rate: Number(rate.toFixed(2))
+  };
+}
+
 async function loadHistory(stationId) {
   try {
     const res = await fetch(
