@@ -153,19 +153,16 @@ function calculateTrend(measurements) {
     };
   }
 
-  // loadHistory() ya ordenó las mediciones:
-  // más antigua → más reciente
-  const oldest = measurements[0];
-  const newest = measurements[measurements.length - 1];
+  // Copia del historial para no modificar el array original
+  const ordered = [...measurements].sort(
+    (a, b) =>
+      new Date(a.timestamp).getTime() -
+      new Date(b.timestamp).getTime()
+  );
 
-  console.log("TREND DEBUG:", {
-  oldest: oldest,
-  newest: newest,
-  oldLevel: oldest.water_level,
-  newLevel: newest.water_level,
-  oldTime: oldest.timestamp,
-  newTime: newest.timestamp
-});
+  // Primera y última medición real
+  const oldest = ordered[0];
+  const newest = ordered[ordered.length - 1];
 
   const oldLevel = Number(oldest.water_level);
   const newLevel = Number(newest.water_level);
@@ -176,12 +173,12 @@ function calculateTrend(measurements) {
   const hours = (newTime - oldTime) / (1000 * 60 * 60);
 
   console.log("TREND CALC:", {
-  oldLevel,
-  newLevel,
-  oldTime,
-  newTime,
-  hours
-});
+    oldLevel,
+    newLevel,
+    oldTime,
+    newTime,
+    hours
+  });
 
   if (
     !Number.isFinite(oldLevel) ||
@@ -198,6 +195,7 @@ function calculateTrend(measurements) {
   }
 
   const rate = (newLevel - oldLevel) / hours;
+
   console.log("TREND RATE:", rate);
 
   let direction;
@@ -229,6 +227,7 @@ function calculateTrend(measurements) {
     rate: Number(rate.toFixed(2))
   };
 }
+
 async function loadHistory(stationId) {
   try {
     const res = await fetch(
