@@ -153,8 +153,8 @@ function calculateTrend(measurements) {
     };
   }
 
-  // Las mediciones deben estar ordenadas
-  // desde la más antigua hasta la más reciente
+  // loadHistory() ya ordenó las mediciones:
+  // más antigua → más reciente
   const oldest = measurements[0];
   const newest = measurements[measurements.length - 1];
 
@@ -166,7 +166,12 @@ function calculateTrend(measurements) {
 
   const hours = (newTime - oldTime) / (1000 * 60 * 60);
 
-  if (!Number.isFinite(hours) || hours <= 0) {
+  if (
+    !Number.isFinite(oldLevel) ||
+    !Number.isFinite(newLevel) ||
+    !Number.isFinite(hours) ||
+    hours <= 0
+  ) {
     return {
       direction: "stable",
       label: "ESTABLE",
@@ -206,7 +211,6 @@ function calculateTrend(measurements) {
     rate: Number(rate.toFixed(2))
   };
 }
-
 async function loadHistory(stationId) {
   try {
     const res = await fetch(
