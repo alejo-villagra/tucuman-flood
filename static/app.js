@@ -224,6 +224,14 @@ async function loadHistory(stationId) {
 
     const measurements = data.measurements || [];
 
+const trend = calculateTrend(measurements);
+
+console.log(
+  "Tendencia de la estación:",
+  data.station_id,
+  trend
+);
+    
     // Orden cronológico: de más antigua a más reciente
     measurements.reverse();
 
