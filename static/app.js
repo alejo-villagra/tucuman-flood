@@ -138,6 +138,8 @@ function selectStation(s) {
 
   el.textContent = riskLabel(r);
   el.className = "risk " + riskClass(r);
+
+  loadHistory(s.station_id);
 }
 
 async function loadHistory(stationId) {
