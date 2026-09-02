@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: tucuman-flood
-    runtime: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
-    envVars:
-      - key: DATABASE_URL
-        sync: false
