@@ -117,7 +117,7 @@ function buildMarkers() {
       iconAnchor: [10, 10]
     });
 
-    s.marker = L.marker([s.lat, s.lon], { icon })
+    s.marker = L.marker([s.latitude, s.longitude], { icon })
       .addTo(map)
       .bindTooltip(s.name)
       .on("click", () => selectStation(s));
